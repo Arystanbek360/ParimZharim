@@ -1,0 +1,196 @@
+{
+    "name": "meteoro/devcraft-web-platform",
+    "type": "project",
+    "description": "The platform for software development at Meteoro.ai's Devcraft division",
+    "version": "1.0.0",
+    "keywords": [
+        "meteoro",
+        "devcraft",
+        "laravel",
+        "framework"
+    ],
+    "license": "proprietary",
+    "require-dev": {
+        "fakerphp/faker": "1.23.1",
+        "laravel/pint": "1.15.1",
+        "laravel/sail": "1.29.1",
+        "mockery/mockery": "1.6.11",
+        "nunomaduro/collision": "8.1.1",
+        "phpunit/phpunit": "10.5.18",
+        "spatie/laravel-ignition": "2.8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/",
+            "Modules\\ParimZharim\\Objects\\": "modules/ParimZharim/Objects/src/",
+            "Modules\\ParimZharim\\Orders\\": "modules/ParimZharim/Orders/src/",
+            "Modules\\ParimZharim\\ProductsAndServices\\": "modules/ParimZharim/ProductsAndServices/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Modules\\Shared\\Core\\Tests\\": "modules/Shared/Core/tests/",
+            "Modules\\Shared\\Payment\\Tests\\": "modules/Shared/Payment/tests/",
+            "Modules\\Shared\\Profile\\Tests\\": "modules/Shared/Profile/tests/",
+            "Modules\\Shared\\IdentityAndAccessManagement\\Tests\\": "modules/Shared/IdentityAndAccessManagement/tests/",
+            "Modules\\Shared\\Documents\\Tests\\": "modules/Shared/Documents/tests/",
+            "Modules\\Shared\\Documents\\Tests\\Database\\Factories\\": "modules/Shared/Documents/tests/database/factories/",
+            "Modules\\ParimZharim\\Objects\\Tests\\": "modules/ParimZharim/Objects/tests/",
+            "Modules\\ParimZharim\\Orders\\Tests\\": "modules/ParimZharim/Orders/tests/",
+            "Modules\\ParimZharim\\ProductsAndServices\\Tests\\": "modules/ParimZharim/ProductsAndServices/tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "meteoro/devcraft-cms": "1.0.0",
+        "meteoro/devcraft-idm": "1.0.0",
+        "meteoro/devcraft-notification": "1.0.0",
+        "meteoro/devcraft-security": "1.0.0",
+        "meteoro/devcraft-payment": "1.0.0",
+        "meteoro/parim-zharim-loyalty": "1.0.0",
+        "meteoro/parim-zharim-objects": "1.0.0",
+        "meteoro/parim-zharim-orders": "1.0.0",
+        "meteoro/parim-zharim-products-and-services": "1.0.0",
+        "meteoro/parim-zharim-profile": "1.0.0",
+        "meteoro/parim-zharim-reservations-tool": "1.0.0",
+        "meteoro/parim-zharim-webapp": "1.0.0"
+    },
+    "repositories": {
+        "DevCraftDependencies": {
+            "type": "path",
+            "url": "modules/Shared/Dependencies"
+        },
+        "Core": {
+            "type": "path",
+            "url": "modules/Shared/Core"
+        },
+        "DevCraftPayment": {
+            "type": "path",
+            "url": "modules/Shared/Payment"
+        },
+        "DevCraftProfile": {
+            "type": "path",
+            "url": "modules/Shared/Profile"
+        },
+        "StepanenkoNovaJson": {
+            "type": "path",
+            "url": "nova-components/stepanenko3/nova-json"
+        },
+        "Outl1neNovaMultiselectField": {
+            "type": "path",
+            "url": "nova-components/outl1ne/nova-multiselect-field"
+        },
+        "Outl1neNovaMultiselectFilter": {
+            "type": "path",
+            "url": "nova-components/outl1ne/nova-multiselect-filter"
+        },
+        "ShuvroroyNovaTabs": {
+            "type": "path",
+            "url": "nova-components/shuvroroy/nova-tabs"
+        },
+        "NovaMegaFilter": {
+            "type": "path",
+            "url": "nova-components/digital-creative/nova-mega-filter"
+        },
+        "Daterangepicker": {
+            "type": "path",
+            "url": "nova-components/rpj/simple-daterange-picker"
+        },
+        "Datetime-wo-timezone": {
+            "type": "path",
+            "url": "nova-components/DatetimeWoTimezone"
+        },
+        "nova": {
+            "type": "composer",
+            "url": "https://nova.laravel.com"
+        },
+        "DevCraftIdm": {
+            "type": "path",
+            "url": "modules/Shared/IdentityAndAccessManagement"
+        },
+        "DevCraftNotification": {
+            "type": "path",
+            "url": "modules/Shared/Notification"
+        },
+        "DevCraftSecurity": {
+            "type": "path",
+            "url": "modules/Shared/Security"
+        },
+        "DevCraftCMS": {
+            "type": "path",
+            "url": "modules/Shared/CMS"
+        },
+        "DevCraftDocuments": {
+            "type": "path",
+            "url": "modules/Shared/Documents"
+        },
+        "EbessAdvancedNovaMediaLibrary": {
+            "type": "path",
+            "url": "nova-components/ebess/advanced-nova-media-library"
+        },
+        "ParimZharimObjects": {
+            "type": "path",
+            "url": "modules/ParimZharim/Objects"
+        },
+        "ParimZharimProfile": {
+            "type": "path",
+            "url": "modules/ParimZharim/Profile"
+        },
+        "ParimZharimProductsAndServices": {
+            "type": "path",
+            "url": "modules/ParimZharim/ProductsAndServices"
+        },
+        "ParimZharimOrders": {
+            "type": "path",
+            "url": "modules/ParimZharim/Orders"
+        },
+        "ParimZharimWebAppp": {
+            "type": "path",
+            "url": "modules/ParimZharim/WebApp"
+        },
+        "ParimZharimLoyaltyProgram": {
+            "type": "path",
+            "url": "modules/ParimZharim/LoyaltyProgram"
+        },
+        "ReservationsTool": {
+            "type": "path",
+            "url": "modules/ParimZharim/Orders/nova-components/ReservationsTool"
+        }
+    }
+}

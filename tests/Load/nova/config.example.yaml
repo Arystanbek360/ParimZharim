@@ -1,0 +1,11 @@
+login_url: 'https://develop.parimzharim.devcraft.meteoro.ai/nova/login/'
+username: 'top'
+password: 'kek'
+urls:
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/resources/orderable-product-admin-resources'
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/resources/product-category-admin-resources'
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/resources/orderable-service-admin-resources'
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/resources/service-category-admin-resources'
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/resources/plan-admin-resources'
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/resources/order-admin-resources'
+  - 'https://develop.parimzharim.devcraft.meteoro.ai/nova/reservations-tool'

@@ -1,0 +1,48 @@
+{
+    "name": "meteoro/devcraft-dependencies",
+    "description": "Package for all shared dependencies of DevCraft",
+    "version": "1.0.0",
+    "type": "metapackage",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "oh1what",
+            "email": "constantinebalzin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "laravel/octane": "2.5.1",
+        "digital-creative/nova-mega-filter": "1.0.5.1",
+        "dniccum/phone-number": "2.3.0",
+        "laravel/framework": "11.4.0",
+        "laravel/nova": "4.35.1",
+        "laravel/sanctum": "4.0.2",
+        "laravel/tinker": "2.9.0",
+        "league/flysystem-aws-s3-v3": "3.27.0",
+        "livewire/livewire": "3.4.11",
+        "lorisleiva/laravel-actions": "2.8.0",
+        "outl1ne/nova-multiselect-field": "4.5.6.1",
+        "outl1ne/nova-multiselect-filter": "4.0.8.1",
+        "sentry/sentry-laravel": "4.5.1",
+        "spatie/laravel-medialibrary": "11.4.6",
+        "stepanenko3/nova-json": "4.0.2.1",
+        "bacon/bacon-qr-code": "3.0.0",
+        "spatie/laravel-permission": "6.7.0",
+        "spomky-labs/otphp": "11.2.2",
+        "devcraft/datetime-wo-timezone": "1.0.0",
+        "maatwebsite/laravel-nova-excel": "1.3.7",
+        "shuvroroy/nova-tabs":"1.1.1.1",
+        "pavloniym/nova-action-buttons": "1.1.1",
+        "waynestate/nova-text-copy-field": "2.0.5",
+        "rhyslees/nova-tags-improved": "2.0.0",
+        "kreait/laravel-firebase": "5.9",
+        "lednerb/nova-action-button-selectors": "2.0.6",
+        "ebess/advanced-nova-media-library": "4.2.0.1",
+        "shuvroroy/nova-dynamic-views": "1.3.0",
+        "maatwebsite/excel": "3.1.58",
+        "phpoffice/phpspreadsheet": "1.29.1",
+        "rpj/daterangepicker": "0.0.8.1"
+    }
+}

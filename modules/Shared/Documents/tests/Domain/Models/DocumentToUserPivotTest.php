@@ -1,0 +1,99 @@
+<?php declare(strict_types=1);
+
+namespace Modules\Shared\Documents\Tests\Domain\Models;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Shared\Documents\Database\Factories\DocumentFactory;
+use Modules\Shared\Documents\Domain\Models\AccessType;
+use Modules\Shared\Documents\Domain\Models\DocumentToUserPivot;
+use Modules\Shared\Documents\Tests\TestCase;
+use Modules\Shared\IdentityAndAccessManagement\Domain\Models\User;
+
+class DocumentToUserPivotTest extends TestCase
+{
+
+
+    private const string TABLE = 'documents_document_to_user';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
+    /**
+     * Проверка: Создается валидный экземпляр pivot-модели с обязательными атрибутами.
+     * @return void
+     */
+    public function testCreateModel(): void
+    {
+        $document = $this->makeAndGetTestDocument();
+        $documentID = $document->id;
+        $userID = User::factory()->create()->id;
+
+        $pivot = new DocumentToUserPivot(['document_id' => $documentID, 'user_id' => $userID]);
+
+        $this->assertSame($documentID, $pivot->document_id);
+        $this->assertSame($userID, $pivot->user_id);
+    }
+
+    /**
+     * Проверка: Сохраняется запись в таблице с заданными атрибутами.
+     * @return void
+     */
+    public function testSaveModel(): void
+    {
+        $document = $this->makeAndGetTestDocument();
+        $user = User::factory()->create();
+
+        $pivot = new DocumentToUserPivot([
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertDatabaseMissing(self::TABLE, [
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+        ]);
+
+        $pivot->save();
+
+        $this->assertNotEmpty($pivot->created_at);
+        $this->assertDatabaseHas(self::TABLE, [
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+            'access_type' => $document->default_access_type->value,
+        ]);
+    }
+
+    /**
+     * Проверка: Сохраняется запись в таблице с заданными атрибутами.
+     * @return void
+     */
+    public function testChangeAccessType(): void
+    {
+        $document = $this->makeAndGetTestDocument();
+        $user = User::factory()->create();
+
+        $pivot = new DocumentToUserPivot([
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+            'access_type' => AccessType::COMMENT,
+        ]);
+
+        $pivot->save();
+
+        $this->assertDatabaseHas(self::TABLE, [
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+            'access_type' => AccessType::COMMENT,
+        ]);
+
+        $document->users()->updateExistingPivot($user->id, ['access_type' => AccessType::WRITE]);
+
+        $this->assertDatabaseHas(self::TABLE, [
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+            'access_type' => AccessType::WRITE,
+        ]);
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "name": "meteoro/parim-zharim-loyalty",
+    "description": "Parim Zharim Loyalty Program Module",
+    "version": "1.0.0",
+    "type": "library",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "oh1what",
+            "email": "constantinebalzin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "meteoro/devcraft-core": "1.0.0",
+        "meteoro/devcraft-idm": "1.0.0",
+        "meteoro/parim-zharim-profile": "1.0.0",
+        "meteoro/parim-zharim-orders": "1.0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "10.5.18"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\ParimZharim\\LoyaltyProgram\\": "src/",
+            "Modules\\ParimZharim\\LoyaltyProgram\\Database\\Factories\\": "database/factories/",
+            "Modules\\ParimZharim\\LoyaltyProgram\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\ParimZharim\\LoyaltyProgram\\Tests\\": "tests/"
+        }
+    }
+}

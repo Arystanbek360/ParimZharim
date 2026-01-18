@@ -1,0 +1,30 @@
+{
+    "name": "devcraft/datetime-wo-timezone",
+    "description": "DateTime field for Laravel Nova without timezone",
+    "version": "1.0.0",
+    "keywords": [
+        "laravel",
+        "nova"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^7.3|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devcraft\\DatetimeWoTimezone\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Devcraft\\DatetimeWoTimezone\\FieldServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

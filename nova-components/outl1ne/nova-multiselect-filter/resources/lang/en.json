@@ -1,0 +1,8 @@
+{
+  "novaMultiselectFilter.maxElements": "Max of :max selected.",
+  "novaMultiselectFilter.noResult": "No results found.",
+  "novaMultiselectFilter.noOptions": "List is empty.",
+  "novaMultiselectFilter.limitText": "and :count more",
+  "novaMultiselectFilter.placeholder": "Select option(s)",
+  "novaMultiselectFilter.nItemsSelected": ":count items selected"
+}

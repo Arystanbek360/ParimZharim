@@ -1,0 +1,8 @@
+{
+  "novaMultiselectFilter.maxElements": "Maksimaalne arv :max valitud.",
+  "novaMultiselectFilter.noResult": "Tulemusi ei leitud.",
+  "novaMultiselectFilter.noOptions": "Valikuid ei ole.",
+  "novaMultiselectFilter.limitText": "ja :count veel",
+  "novaMultiselectFilter.placeholder": "Tee valik",
+  "novaMultiselectFilter.nItemsSelected": ":count valitud"
+}

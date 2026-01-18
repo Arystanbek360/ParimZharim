@@ -1,0 +1,53 @@
+/* resources/views/css/styles.css */
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    color: #333333;
+}
+.form-container p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.form-container form {
+    display: flex;
+    flex-direction: column; /* Arrange elements in a column */
+    align-items: center; /* Center align items */
+    padding: 0;
+    margin: 0;
+}
+.form-container div {
+    margin-bottom: 20px;
+    width: 100%; /* Ensure full width for div elements */
+    text-align: left; /* Align text to the left inside divs */
+}
+.form-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-container input[type="text"] {
+    width: calc(100% - 16px); /* Adjust width to fit within the container */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.form-container button {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.form-container button:hover {
+    background-color: #218838;
+}
+.form-container span {
+    color: red;
+    font-size: 0.9em;
+}

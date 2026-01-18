@@ -1,0 +1,33 @@
+<?php
+
+namespace Devcraft\DatetimeWoTimezone;
+
+use Illuminate\Support\ServiceProvider;
+use Laravel\Nova\Events\ServingNova;
+use Laravel\Nova\Nova;
+
+class FieldServiceProvider extends ServiceProvider
+{
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Nova::serving(function (ServingNova $event) {
+            Nova::script('datetime-wo-timezone', __DIR__.'/../dist/js/field.js');
+            Nova::style('datetime-wo-timezone', __DIR__.'/../dist/css/field.css');
+        });
+    }
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+}

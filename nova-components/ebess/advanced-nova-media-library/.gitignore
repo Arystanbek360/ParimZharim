@@ -1,0 +1,13 @@
+.DS_Store
+.phpunit.result.cache
+/.idea
+/docker-compose.override.yml
+/node_modules
+/vendor
+auth.json
+!composer.json
+composer.lock
+composer.phar
+package-lock.json
+phpunit.xml
+Thumbs.db

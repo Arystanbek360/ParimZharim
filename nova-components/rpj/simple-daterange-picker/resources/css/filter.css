@@ -1,0 +1,111 @@
+/* Nova Filter CSS */
+.dp__menu_inner .dp__instance_calendar {
+    --dp-cell-size: 28px;
+    --dp-font-size: 14px;
+    --dp-primary-color: #0ea5e9;
+}
+
+.dp__component .dp__calendar_header {
+    font-weight: normal;
+}
+
+.dp__component .dp__input_wrap .dp__input {
+    font-weight: 400;
+}
+
+.dp__cell_inner {
+    font-size: 14px;
+}
+
+.dp__theme_light {
+    --dp-background-color: #fff;
+    --dp-text-color: #433e3e;
+}
+
+.dp__sidebar_left {
+    min-width: 150px;
+}
+
+.dp__sidebar_left {
+    min-width: 140px;
+}
+
+.dp__sidebar_left ul li {
+    font-size: 12px;
+    margin-top: 10px;
+    line-height: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Стили для активного элемента */
+.dp__sidebar_left ul li.active {
+    font-weight: bold;
+    color: #0ea5e9;
+    /* Можете изменить цвет на свой */
+}
+
+.dp__action_button.dp__action_cancel {
+    display: none;
+}
+
+.component__daterange-picker.dp__component .dp__input_wrap .dp__input {
+    height: 35px;
+    border-color: #cbd5e1;
+}
+
+.component__daterange-picker .dp__input {
+    height: 36px;
+    border-color: #334155;
+    border-radius: 4px;
+    cursor: pointer;
+
+}
+
+.dp__calendar_header_item {
+    color: #88a3b5;
+    font-weight: 500;
+}
+
+html.dark .dp--year-select:hover, html.dark .dp__month_year_select:hover {
+    background: #1e293b;
+}
+
+html.dark .dp__selection_preview {
+    color: #91a5be;
+}
+html.dark .dp__inner_nav:hover {
+    background: #1e293b;
+}
+html.dark .dp__overlay{
+    background: #0f172a;
+    color: #91a5c1;
+}
+html.dark button.dp__btn.dp__month_year_select {
+    color: #91a5c1;
+}
+
+html.dark .dp__cell_inner.dp__pointer.dp--past.dp__range_between {
+    background: #1e293b;
+    border: 1px solid #1e293b;
+}
+
+html.dark .dp__cell_inner.dp__pointer.dp--past {
+    color: #88a3b5;
+}
+
+html.dark .dp__sidebar_left {
+    border-inline-end: 1px solid #435165;
+}
+
+html.dark .dp__menu.dp--menu-wrapper {
+    background-color: #334155;
+    color: #94a3b8;
+    border: 1px solid #425065;
+}
+
+html.dark .component__daterange-picker.dp__component .dp__input_wrap .dp__input {
+    background-color: #0f172a;
+    color: #94a3b8;
+    border: 1px solid #334155;
+}
