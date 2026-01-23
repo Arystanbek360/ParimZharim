@@ -319,12 +319,16 @@ class OrderApiController extends BaseApiController
 
     public function createPaymentForOrder(Request $request): JsonResponse
     {
+        return response()->json(['payment_id' => 1, config('app.url') . '/payment-widget/' . 3]);
+
+
         $request->validate([
             'order_id' => 'required|integer',
             'payment_method' => 'required|string',
         ]);
 
-        $orderID = (int)$request->input('order_id');
+//        $orderID = (int)$request->input('order_id');
+        $orderID = 1;
 
         $paymentMethod = PaymentMethodType::from($request->input('payment_method'));
 
@@ -339,8 +343,7 @@ class OrderApiController extends BaseApiController
                 $paymentUrl = config('app.url') . '/payment-widget/' . $payment->id;
             }
 
-            return response()->json(['payment_id' => $payment->id,
-                'payment_url' => $paymentUrl]);
+            return response()->json(['payment_id' => $payment->id, 'payment_url' => $paymentUrl]);
         } catch (StatusChangeViolation|AdvancePaymentIsAlreadyCreated $e) {
             return $this->respondError($e->getMessage(), 409);
         }
