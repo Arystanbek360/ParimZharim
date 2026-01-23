@@ -319,7 +319,7 @@ class OrderApiController extends BaseApiController
 
     public function createPaymentForOrder(Request $request): JsonResponse
     {
-        return response()->json(['payment_id' => 1, config('app.url') . '/payment-widget/' . 3]);
+        return response()->json(['payment_id' => 3, 'payment_url' => config('app.url') . '/payment-widget/' . 3]);
 
 
         $request->validate([
