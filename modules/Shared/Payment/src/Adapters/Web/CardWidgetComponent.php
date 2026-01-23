@@ -19,13 +19,13 @@ class CardWidgetComponent extends BaseUIComponent
 
     protected CloudPaymentServiceInterface $paymentService;
 
-     private function getPaymentService(): CloudPaymentServiceInterface
-     {
+    private function getPaymentService(): CloudPaymentServiceInterface
+    {
         if (!isset($this->paymentService)) {
-             $this->paymentService = app(CloudPaymentServiceInterface::class);
-         }
-         return $this->paymentService;
-     }
+            $this->paymentService = app(CloudPaymentServiceInterface::class);
+        }
+        return $this->paymentService;
+    }
 
 
     public function mount(int $paymentID): void
