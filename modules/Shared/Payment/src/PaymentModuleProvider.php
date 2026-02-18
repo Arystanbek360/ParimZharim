@@ -13,7 +13,7 @@ use Modules\Shared\Payment\Domain\Services\CloudPaymentServiceInterface;
 use Modules\Shared\Payment\Infrastructure\Repositories\EloquentPaymentMethodRepository;
 use Modules\Shared\Payment\Infrastructure\Repositories\EloquentPaymentRepository;
 use Modules\Shared\Payment\Infrastructure\Services\CloudPaymentService;
-//use Modules\Shared\Payment\Infrastructure\Services\TipTopPayPaymentService;
+use Modules\Shared\Payment\Infrastructure\Services\TipTopPayPaymentService;
 
 class PaymentModuleProvider extends BaseModuleProvider
 {
@@ -24,8 +24,8 @@ class PaymentModuleProvider extends BaseModuleProvider
     {
         $this->app->bind(PaymentRepository::class, EloquentPaymentRepository::class);
         $this->app->bind(PaymentMethodRepository::class, EloquentPaymentMethodRepository::class);
-//        $this->app->bind(CloudPaymentServiceInterface::class, TipTopPayPaymentService::class);
-        $this->app->bind(CloudPaymentServiceInterface::class, CloudPaymentService::class);
+        $this->app->bind(CloudPaymentServiceInterface::class, TipTopPayPaymentService::class);
+//        $this->app->bind(CloudPaymentServiceInterface::class, CloudPaymentService::class);
     }
 
     /**
