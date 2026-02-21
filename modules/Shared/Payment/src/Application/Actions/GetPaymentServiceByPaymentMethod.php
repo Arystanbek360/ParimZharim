@@ -20,6 +20,7 @@ class GetPaymentServiceByPaymentMethod extends BaseAction {
             PaymentMethodType::CASH => CashPaymentService::class,
             PaymentMethodType::KASPI => KaspiPaymentService::class,
             PaymentMethodType::CLOUD_PAYMENT => app(CloudPaymentServiceInterface::class)::class,
+            PaymentMethodType::ApplePay => app(CloudPaymentServiceInterface::class)::class,
             default => throw new WrongPaymentMethodType('Неизвестный тип оплаты')
         };
     }
