@@ -21,7 +21,7 @@ enum PaymentMethodType: string implements BaseEnum
             self::CASH => 'Наличные',
             self::KASPI => 'Перевод Kaspi',
             self::CLOUD_PAYMENT => 'Банковская карта',
-            self::ApplePay => 'ApplePay',
+            self::ApplePay => 'Apple Pay',
         };
     }
 }
