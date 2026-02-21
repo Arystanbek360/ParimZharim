@@ -33,6 +33,7 @@ class CreatePayment extends BaseAction {
         $payment->status = match ($paymentData->paymentMethodType) {
             PaymentMethodType::CASH, PaymentMethodType::KASPI => PaymentStatus::PENDING,
             PaymentMethodType::CLOUD_PAYMENT => PaymentStatus::CREATED,
+            PaymentMethodType::ApplePay => PaymentStatus::CREATED,
         };
         $payment->total = 0;
         $paymentItems = new PaymentItemCollection();
