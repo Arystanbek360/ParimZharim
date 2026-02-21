@@ -12,7 +12,7 @@ enum PaymentMethodType: string implements BaseEnum
     case CASH = 'Cash';
     case KASPI = 'Kaspi';
     case CLOUD_PAYMENT = 'CloudPayment';
-    case ApplePay = 'Apple Pay';
+    case ApplePay = 'ApplePay';
 
     public function label(): string
     {
@@ -21,7 +21,7 @@ enum PaymentMethodType: string implements BaseEnum
             self::CASH => 'Наличные',
             self::KASPI => 'Перевод Kaspi',
             self::CLOUD_PAYMENT => 'Банковская карта',
-            self::ApplePay => 'Apple Pay',
+            self::ApplePay => 'ApplePay',
         };
     }
 }
