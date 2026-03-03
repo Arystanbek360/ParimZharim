@@ -153,6 +153,7 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
 
             match ($payment->status) {
                 PaymentStatus::SUCCESS => PaymentSucceeded::dispatch($payment),
+                PaymentStatus::COMPLETED => PaymentSucceeded::dispatch($payment),
                 PaymentStatus::FAILED => PaymentFailed::dispatch($payment, $errorReason),
                 default => null,
             };
