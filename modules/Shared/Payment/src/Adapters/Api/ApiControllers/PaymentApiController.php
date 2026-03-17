@@ -42,10 +42,4 @@ class PaymentApiController extends BaseApiController
 
         return response()->json($transformedMethods);
     }
-
-//    public function createPayment()
-//    {
-//        dd(1);
-//        return response()->json('hello');
-//    }
 }

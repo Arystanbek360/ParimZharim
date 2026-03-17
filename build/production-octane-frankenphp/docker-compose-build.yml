@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+  nginx:
+    image: $CI_REGISTRY_IMAGE/nginx:$TAG-${GIT_HASH}
+    platform: linux/amd64
+    build:
+      context: ../../
+      dockerfile: build/production-octane-frankenphp/app/Dockerfile
+      target: nginx
+  app:
+    image: $CI_REGISTRY_IMAGE/app:$TAG-${GIT_HASH}
+    platform: linux/amd64
+    build:
+      context: ../../
+      dockerfile: build/production-octane-frankenphp/app/Dockerfile
+      target: app
+      args:
+        GIT_HASH: ${GIT_HASH}
+
+

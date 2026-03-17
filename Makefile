@@ -1,3 +1,18 @@
+GIT_HASH=$(shell git rev-parse --short HEAD)
+CI_REGISTRY_IMAGE := parim-zharim
+APP_PROJECT := parim-zharim
+
+build-base-octane-frankenphp-for-deploy:
+	docker build --platform=linux/amd64 \
+    -f build/production-octane-frankenphp/app/Base.dockerfile \
+    -t parim-zharim/base:base \
+    .
+
+build-octane-frankenphp-for-deploy:
+	cd build/production-octane-frankenphp && cp ../../auth.json ./auth.json && \
+	CI_REGISTRY_IMAGE="${CI_REGISTRY_IMAGE}" TAG=${APP_PROJECT}-octane-frankenphp GIT_HASH=${GIT_HASH} docker compose -f docker-compose-build.yml build && \
+	rm ./auth.json
+
 test:
 	./vendor/bin/sail php artisan test --colors=always
 

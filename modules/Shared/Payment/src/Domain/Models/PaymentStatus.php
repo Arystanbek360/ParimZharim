@@ -13,9 +13,7 @@ enum PaymentStatus: string implements BaseEnum
     case PENDING = 'Pending';
     case SUCCESS = 'Success';
     case FAILED = 'Failed';
-
     case CANCELED = 'Canceled';
-
     case COMPLETED = 'Completed';
 
     public function label(): string
