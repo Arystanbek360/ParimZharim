@@ -43,6 +43,10 @@ USER www-data
 # Устанавливаем зависимости Composer
 RUN composer install -n -o --ansi --no-scripts --no-progress --no-dev --prefer-dist
 
+# Очищаем старый кеш (bootstrap/cache может содержать dev-зависимости)
+RUN php artisan clear-compiled || true && \
+    rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+
 # Кэшируем конфигурацию, маршруты, представления и события
 RUN php artisan devcraft-web-platform:publish-all-assets && \
     php artisan config:cache && \

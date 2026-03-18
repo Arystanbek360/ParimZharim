@@ -13,7 +13,7 @@ services:
             - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
-#            SUPERVISOR_PHP_COMMAND: "/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan octane:start --watch --server=frankenphp --host=0.0.0.0 --admin-port=2019 --port=80 --workers=1"
+            SUPERVISOR_PHP_COMMAND: "/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan octane:start --watch --server=frankenphp --host=0.0.0.0 --admin-port=2019 --port=80 --workers=1"
             XDG_CONFIG_HOME: /var/www/html/config
             XDG_DATA_HOME: /var/www/html/data
             WWWUSER: '${WWWUSER}'
@@ -38,15 +38,15 @@ services:
                 limits:
                     cpus: '1.0'
                     memory: 2048M
-#    docusaurus:
-#        build:
-#            context: ./docusaurus
-#            dockerfile: Dockerfile
-#        ports:
-#            - '3088:3000'
-#        networks:
-#            - sail
-#        command: 'npm run start -- --host 0.0.0.0'
+    docusaurus:
+        build:
+            context: ./docusaurus
+            dockerfile: Dockerfile
+        ports:
+            - '3088:3000'
+        networks:
+            - sail
+        command: 'npm run start -- --host 0.0.0.0'
     pgsql:
         image: 'postgres:15'
         ports:
