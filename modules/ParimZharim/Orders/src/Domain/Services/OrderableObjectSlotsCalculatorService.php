@@ -240,13 +240,16 @@ class OrderableObjectSlotsCalculatorService extends BaseDomainService
         // Переменная для накопления длительности свободных слотов
         $freeSlotDuration = 0;
 
+        // При редактировании используем расширенный диапазон, чтобы захватить резервы следующих заказов
+        $loopEndDate = $isEditingExistingOrder ? $extendedEndDate : $endDate;
+
         foreach ($slots as $slotIndex => $slot) {
             $slotStart = Carbon::parse($slot['start'])->shiftTimezone($serviceObject->getObjectTimezone());
             $slotEnd = Carbon::parse($slot['end'])->shiftTimezone($serviceObject->getObjectTimezone());
 
             // Пропускаем слоты, которые полностью после нашего времени окончания
-            if ($slotStart->greaterThan($endDate)) {
-                break; // Все последующие слоты тоже будут после endDate
+            if ($slotStart->greaterThanOrEqualTo($loopEndDate)) {
+                break; // Все последующие слоты тоже будут после loopEndDate
             }
 
             // Проверяем, что слот занят заказом, если это не текущий заказ

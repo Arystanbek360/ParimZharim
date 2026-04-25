@@ -15,6 +15,8 @@ class GetScheduleDetailsForObjectOnDate extends BaseAction
 
         $schedules = $object->schedules()
             ->wherePivot('date_from', '<=', $date)
+            ->orderByPivot('date_from', 'desc')
+            ->limit(1)
             ->get();
 
         $minDuration = $schedules

@@ -13,6 +13,8 @@ class GetPlanDetailsForObjectOnDate extends BaseAction
     {
         $plans = $object->plans()
             ->wherePivot('date_from', '<=', $date)
+            ->orderByPivot('date_from', 'desc')
+            ->limit(1)
             ->get();
 
         if ($plans->isEmpty()) {
