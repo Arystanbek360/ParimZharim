@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Preview Payment Widget</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background: #435172;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #435172;
+            color: #2c3446;
+            font-family: Arial, sans-serif;
+        }
+
+        .spacer { height: 48px; }
+
+        .modal {
+            width: 100vw;
+            max-width: 648px;
+            min-height: 1040px;
+            margin: 0 auto;
+            background: #f5f8fc;
+            padding: 22px 32px 38px;
+        }
+
+        .close {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            color: #8f96a4;
+            font-size: 34px;
+            line-height: 1;
+        }
+
+        .title {
+            margin: 0 0 14px;
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .amount {
+            margin: 0 0 54px;
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .section-title {
+            margin: 0 0 38px;
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .cards {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 36px;
+        }
+
+        .card-button {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            min-height: 82px;
+            padding: 20px 24px;
+            border: 0;
+            border-radius: 14px;
+            background: #e9edf4;
+            color: #2c3446;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            font-size: 20px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .card-main {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-meta {
+            flex: 0 0 auto;
+            color: #8f96a4;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .divider {
+            display: none;
+            margin: 30px 0 36px;
+            height: 1px;
+            background: #dfe5ef;
+        }
+
+        .primary-button {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            min-height: 84px;
+            border: 0;
+            border-radius: 10px;
+            background: #8ea8f4;
+            color: #fff;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .note {
+            margin: 64px 0 0;
+            color: #2c3446;
+            font-size: 18px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
+
+        .terms {
+            margin: 28px 0 0;
+            color: #2c3446;
+            font-size: 18px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
+
+        .terms a {
+            color: #4776ff;
+            text-decoration: none;
+        }
+
+        .secured {
+            margin-top: 82px;
+            color: #c7ceda;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .alert {
+            display: none;
+            margin: 16px 0 0;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.35;
+            font-weight: 700;
+        }
+
+        .alert-success {
+            background: #e5f6ec;
+            color: #116b35;
+        }
+
+        .alert-error {
+            background: #fdecec;
+            color: #9f1d1d;
+        }
+
+        @media (max-width: 520px) {
+            .modal {
+                width: 100vw;
+                max-width: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="spacer"></div>
+
+<main class="modal">
+    <div class="close">&times;</div>
+
+    <h1 class="title">Предоплата заказа №9922</h1>
+    <div class="amount">30,00 ₸</div>
+
+    <section>
+        <h2 class="section-title">Оплатить картой</h2>
+
+        <div class="cards">
+            <button class="card-button" type="button">
+                <span class="card-main">Visa 4242 42****** 4242</span>
+                <span class="card-meta">12/25</span>
+            </button>
+
+            <button class="card-button" type="button">
+                <span class="card-main">MasterCard 5555 55****** 4444</span>
+                <span class="card-meta">08/27</span>
+            </button>
+        </div>
+    </section>
+
+    <button class="primary-button" type="button">Оплатить новой картой</button>
+
+    <div class="note">При оплате данные карты сохранятся</div>
+
+    <div class="terms">
+        Нажимая «Оплатить», вы принимаете условия
+        <a href="#">Оферты</a> и даете
+        <a href="#">Согласие на обработку персональных данных</a>.
+    </div>
+
+    <div class="secured">Secured by TipTop Pay</div>
+
+    <div class="alert alert-success">Оплата прошла успешно.</div>
+    <div class="alert alert-error">Не удалось оплатить сохраненной картой. Попробуйте другую карту или введите новую.</div>
+</main>
+
+<div class="spacer"></div>
+</body>
+</html>

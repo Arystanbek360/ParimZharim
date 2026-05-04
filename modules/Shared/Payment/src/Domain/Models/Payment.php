@@ -42,6 +42,7 @@ class Payment extends BaseModel {
         'status' => PaymentStatus::class,
         'payment_method' => PaymentMethodType::class,
         'items' => PaymentItemCollection::class,
+        'metadata' => 'array',
     ];
 
     public function items(): HasMany

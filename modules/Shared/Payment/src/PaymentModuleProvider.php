@@ -7,9 +7,11 @@ use Livewire\Livewire;
 use Modules\Shared\Core\BaseModuleProvider;
 use Modules\Shared\Payment\Adapters\Cli\ProcessPaymentCommand;
 use Modules\Shared\Payment\Adapters\Web\CardWidgetComponent;
+use Modules\Shared\Payment\Domain\Repositories\PaymentCardRepository;
 use Modules\Shared\Payment\Domain\Repositories\PaymentMethodRepository;
 use Modules\Shared\Payment\Domain\Repositories\PaymentRepository;
 use Modules\Shared\Payment\Domain\Services\CloudPaymentServiceInterface;
+use Modules\Shared\Payment\Infrastructure\Repositories\EloquentPaymentCardRepository;
 use Modules\Shared\Payment\Infrastructure\Repositories\EloquentPaymentMethodRepository;
 use Modules\Shared\Payment\Infrastructure\Repositories\EloquentPaymentRepository;
 use Modules\Shared\Payment\Infrastructure\Services\CloudPaymentService;
@@ -23,6 +25,7 @@ class PaymentModuleProvider extends BaseModuleProvider
     public function register(): void
     {
         $this->app->bind(PaymentRepository::class, EloquentPaymentRepository::class);
+        $this->app->bind(PaymentCardRepository::class, EloquentPaymentCardRepository::class);
         $this->app->bind(PaymentMethodRepository::class, EloquentPaymentMethodRepository::class);
         $this->app->bind(CloudPaymentServiceInterface::class, TipTopPayPaymentService::class);
 //        $this->app->bind(CloudPaymentServiceInterface::class, CloudPaymentService::class);

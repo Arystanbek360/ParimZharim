@@ -5,9 +5,12 @@ namespace Modules\Shared\Payment\Adapters\Api\ApiControllers\Webhooks;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Modules\Shared\Core\Adapters\Api\BaseApiController;
+use Modules\Shared\Payment\Application\Actions\CompletePayment;
 use Modules\Shared\Payment\Application\Actions\QueryPaymentByID;
+use Modules\Shared\Payment\Application\Actions\SavePaymentCardFromTipTopPayWebhook;
 use Modules\Shared\Payment\Application\Actions\SyncPaymentStatusFromPaymentSystem;
 use Modules\Shared\Payment\Domain\Models\Payment;
+use Modules\Shared\Payment\Domain\Models\PaymentStatus;
 
 class TipTopPayWebhookController extends BaseApiController
 {
@@ -25,7 +28,7 @@ class TipTopPayWebhookController extends BaseApiController
         }
 
         $data = $request->all();
-        $invoiceID = (int) $data['InvoiceId'] ?? null;
+        $invoiceID = $this->getInvoiceId($data);
 
         if (!$invoiceID) {
             return response()->json(['code' => '-1', 'message' => 'Missing InvoiceId'], 400);
@@ -40,9 +43,16 @@ class TipTopPayWebhookController extends BaseApiController
             return response()->json(['code' => '-1', 'message' =>'Invalid payment data'], 400);
         }
 
-        SyncPaymentStatusFromPaymentSystem::make()->handle($payment);
+        if (strtolower($type) === 'pay') {
+            SavePaymentCardFromTipTopPayWebhook::make()->handle($payment, $data);
+        }
 
-        // Дополнительная логика в зависимости от типа уведомления может быть добавлена здесь, если нужно.
+        $status = SyncPaymentStatusFromPaymentSystem::make()->handle($payment);
+
+        if ($status === PaymentStatus::SUCCESS) {
+            CompletePayment::make()->handle($payment);
+        }
+
         return response()->json(['code' => '0']);
     }
 
@@ -62,8 +72,18 @@ class TipTopPayWebhookController extends BaseApiController
 
     private function canSyncPaymentData(array $data, Payment $payment): bool
     {
-        return $data['Amount'] == $payment->total
-            && (int) $data['InvoiceId'] == $payment->id
-            && (int) $data['AccountId'] == $payment->customer_id;
+        $amount = (float)($data['Amount'] ?? 0);
+        $accountId = (string)($data['AccountId'] ?? '');
+
+        return abs($amount - (float)$payment->total) < 0.01
+            && $this->getInvoiceId($data) === $payment->id
+            && $accountId === (string)$payment->customer_id;
+    }
+
+    private function getInvoiceId(array $data): ?int
+    {
+        $invoiceId = $data['InvoiceId'] ?? $data['ExternalId'] ?? $data['externalId'] ?? null;
+
+        return $invoiceId ? (int)$invoiceId : null;
     }
 }

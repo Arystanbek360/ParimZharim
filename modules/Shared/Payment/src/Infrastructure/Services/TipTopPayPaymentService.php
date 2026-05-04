@@ -9,6 +9,7 @@ use Modules\Shared\Core\Infrastructure\BaseService;
 use Modules\Shared\Payment\Domain\Events\PaymentFailed;
 use Modules\Shared\Payment\Domain\Events\PaymentSucceeded;
 use Modules\Shared\Payment\Domain\Models\Payment;
+use Modules\Shared\Payment\Domain\Models\PaymentCard;
 use Modules\Shared\Payment\Domain\Models\PaymentStatus;
 use Modules\Shared\Payment\Domain\Repositories\PaymentRepository;
 use Modules\Shared\Payment\Domain\Services\CloudPaymentServiceInterface;
@@ -133,6 +134,99 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
     /**
      * @throws ConnectionException
      */
+    public function payByToken(Payment $payment, PaymentCard $paymentCard): Payment
+    {
+        $response = $this->auth()->post($this->base_url . 'payments/tokens/auth', [
+            'Amount' => $payment->total,
+            'Currency' => 'KZT',
+            'AccountId' => (string)$payment->customer_id,
+            'Token' => $paymentCard->token,
+            'InvoiceId' => (string)$payment->id,
+            'Description' => $payment->comment,
+            'TrInitiatorCode' => 1,
+        ]);
+
+        $data = $response->json();
+        $this->saveExternalSystemTransactionLog($payment, $data);
+
+        if (!empty($data['Model'])) {
+            if ($this->isThreeDsRequired($data['Model'])) {
+                $this->saveThreeDsChallenge($payment, $data['Model']);
+                return $payment;
+            }
+
+            $status = $this->mapStatus($data['Model']['Status']);
+            if ($status === PaymentStatus::FAILED) {
+                PaymentFailed::dispatch($payment, $data['Model']['Reason'] ?? null);
+                return $payment;
+            }
+
+            $this->syncPaymentFromProviderModel($payment, $data['Model']);
+            return $payment;
+        }
+
+        if (($data['Success'] ?? false) !== true) {
+            PaymentFailed::dispatch($payment, $data['Message'] ?? null);
+        }
+
+        return $payment;
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    public function completeThreeDsPayment(Payment $payment, string $transactionId, string $paRes): Payment
+    {
+        $response = $this->auth()->post($this->base_url . 'payments/cards/post3ds', [
+            'TransactionId' => (int)$transactionId,
+            'PaRes' => $paRes,
+        ]);
+
+        $data = $response->json();
+        $this->saveExternalSystemTransactionLog($payment, $data);
+
+        if (!empty($data['Model'])) {
+            $this->syncPaymentFromProviderModel($payment, $data['Model']);
+            $this->clearThreeDsChallenge($payment);
+            return $payment;
+        }
+
+        PaymentFailed::dispatch($payment, $data['Message'] ?? null);
+
+        return $payment;
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    public function getTokensForAccount(string $accountId): array
+    {
+        $tokens = [];
+        $page = 1;
+
+        do {
+            $response = $this->auth()->post($this->base_url . 'payments/tokens/list', [
+                'PageNumber' => $page,
+            ]);
+
+            $data = $response->json();
+            $items = $data['Model'] ?? [];
+
+            foreach ($items as $item) {
+                if ((string)($item['AccountId'] ?? '') === $accountId && !empty($item['Token'])) {
+                    $tokens[] = $item;
+                }
+            }
+
+            $page++;
+        } while (($data['Success'] ?? false) === true && count($items) > 0 && $page <= 20);
+
+        return $tokens;
+    }
+
+    /**
+     * @throws ConnectionException
+     */
     public function syncFromPaymentSystemProvider(int $paymentID): Payment
     {
         $response = $this->auth()->post($this->base_url . 'v2/payments/find', [
@@ -143,20 +237,7 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
         $payment = $this->paymentRepository->getPaymentById($paymentID);
 
         if (isset($data['Model'])) {
-            $payment->external_id = $data['Model']['TransactionId'];
-            $payment->status = $this->mapStatus($data['Model']['Status']);
-            $payment->total = $data['Model']['Amount'];
-            $payment->comment = $data['Model']['Description'];
-            $payment->customer_id = $data['Model']['AccountId'];
-            $errorReason = $data['Model']['Reason'] ?? null;
-            $this->paymentRepository->savePayment($payment);
-
-            match ($payment->status) {
-                PaymentStatus::SUCCESS => PaymentSucceeded::dispatch($payment),
-                PaymentStatus::COMPLETED => PaymentSucceeded::dispatch($payment),
-                PaymentStatus::FAILED => PaymentFailed::dispatch($payment, $errorReason),
-                default => null,
-            };
+            $this->syncPaymentFromProviderModel($payment, $data['Model']);
         }
 
         return $payment;
@@ -194,6 +275,53 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
             'Declined' => PaymentStatus::FAILED,
             'Cancelled' => PaymentStatus::CANCELED,
             default => PaymentStatus::CREATED,
+        };
+    }
+
+    private function isThreeDsRequired(array $model): bool
+    {
+        return !empty($model['AcsUrl']) && !empty($model['PaReq']) && !empty($model['TransactionId']);
+    }
+
+    private function saveThreeDsChallenge(Payment $payment, array $model): void
+    {
+        $metadata = $payment->metadata ?? [];
+        $metadata['threeDs'] = [
+            'transactionId' => (string)$model['TransactionId'],
+            'paReq' => $model['PaReq'],
+            'acsUrl' => $model['AcsUrl'],
+            'createdAt' => now()->toDateTimeString(),
+        ];
+
+        $payment->external_id = (string)$model['TransactionId'];
+        $payment->status = PaymentStatus::PENDING;
+        $payment->metadata = $metadata;
+        $this->paymentRepository->savePayment($payment);
+    }
+
+    private function clearThreeDsChallenge(Payment $payment): void
+    {
+        $metadata = $payment->metadata ?? [];
+        unset($metadata['threeDs']);
+        $payment->metadata = $metadata;
+        $this->paymentRepository->savePayment($payment);
+    }
+
+    private function syncPaymentFromProviderModel(Payment $payment, array $model): void
+    {
+        $payment->external_id = $model['TransactionId'];
+        $payment->status = $this->mapStatus($model['Status']);
+        $payment->total = $model['Amount'];
+        $payment->comment = $model['Description'];
+        $payment->customer_id = $model['AccountId'];
+        $errorReason = $model['Reason'] ?? null;
+        $this->paymentRepository->savePayment($payment);
+
+        match ($payment->status) {
+            PaymentStatus::SUCCESS => PaymentSucceeded::dispatch($payment),
+            PaymentStatus::COMPLETED => PaymentSucceeded::dispatch($payment),
+            PaymentStatus::FAILED => PaymentFailed::dispatch($payment, $errorReason),
+            default => null,
         };
     }
 }

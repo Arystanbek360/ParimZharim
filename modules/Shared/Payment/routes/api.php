@@ -5,8 +5,12 @@ use Illuminate\Support\Facades\Route;
 use Modules\Shared\Payment\Adapters\Api\ApiControllers\PaymentApiController;
 use Modules\Shared\Payment\Adapters\Api\ApiControllers\Webhooks\CloudPaymentWebhookController;
 use Modules\Shared\Payment\Adapters\Api\ApiControllers\Webhooks\TipTopPayWebhookController;
+use Modules\Shared\Payment\Adapters\Web\TipTopPayThreeDsController;
 
 Route::prefix('api/payments')->group(function () {
+    Route::post('/tiptoppay/post3ds/{paymentID}', [TipTopPayThreeDsController::class, 'handleCallback'])
+        ->name('payment.tiptoppay.post3ds');
+
     Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/create-payment', [PaymentApiController::class, 'createPayment']);
         Route::get('/payment-methods', [PaymentApiController::class, 'getPaymentsMethodsForMobile']);

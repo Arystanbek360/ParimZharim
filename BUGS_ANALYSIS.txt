@@ -1,0 +1,250 @@
+================================================================================
+АНАЛИЗ БАГОВ — ParimZharim
+Дата анализа: 23 апреля 2026
+Задача: расписание с 1 мая, закрытие в 02:00, минимум 3 часа
+================================================================================
+
+КОНТЕКСТ
+--------
+- Для бань (объекты ID 5,6,7,8,9,10) добавили новые расписания и тарифы,
+  начинающиеся с 1 мая 2026 (date_from = 2026-05-01 00:00:00)
+- Новое расписание: открытие в 09:00, закрытие в 02:00 следующего дня
+  (ночные слоты: time_from="00:00", time_to="01:59")
+- Минимальная длительность бронирования: 3 часа (min_duration=180 для бань №3-6,
+  120 для бань №1-2)
+- Максимально доступный старт: 23:00 (23:00 + 3ч = 02:00 — закрытие)
+
+ДАННЫЕ В БД (production: 77.240.38.129, docker: platform_db)
+-------------------------------------------------------------
+Таблица orders_schedule_to_object:
+  Баня №1 (ID=5): Schedule 1 "Баня №1-2"     date_from=2024-05-02
+                   Schedule 25 "Бани №1,2 с 1 мая 2026" date_from=2026-05-01
+
+  Баня №2 (ID=6): Schedule 1                  date_from=2024-05-01
+                   Schedule 25                 date_from=2026-05-01
+
+  Баня №3 (ID=7): Schedule 2 "Баня №3-6"      date_from=2024-05-01
+                   Schedule 26 "Бани №3-6 с 1 мая 2026" date_from=2026-05-01
+
+  Баня №4,5,6 (ID=8,9,10): Schedule 2         date_from=2024-05-01
+                             Schedule 24 "Гриль-дома №1-5 с 1 мая 2026" date_from=2026-05-01
+
+Таблица orders_plan_to_object:
+  Баня №1 (ID=5): Plan 1 "Баня №1, летний."   date_from=2024-05-02
+                   Plan 25 "бани№1 с 1 мая 2026" date_from=2026-05-01
+
+  Баня №2 (ID=6): Plan 2 "Баня №2, летний."   date_from=2024-05-01
+                   Plan 26 "баня №2 с 1 мая 2026" date_from=2026-05-01
+
+  Баня VIP №3 (ID=7): Plan 3 "Баня VIP №3, летний." date_from=2024-05-01
+                        Plan 27 "Баня VIP №3 с 1 мая 2026" date_from=2026-05-01
+
+  Баня №4,5,6 (ID=8,9,10): Plan 4 "Баня №4,5,6, летний." date_from=2024-05-01
+                              Plan 28 "Бани№4,5,6 с 1 мая 2026" date_from=2026-05-01
+
+Расписание 25 (Бани №1,2) week_days:
+  {"time_to":"23:59","weekdays":["1","2","3","4"],"time_from":"09:00","max_duration":"1020","min_duration":"120","service_duration":"60"}
+  {"time_to":"01:59","weekdays":["2","3","4"],"time_from":"00:00","max_duration":"1020","min_duration":"120","service_duration":"60"}
+  {"time_to":"01:59","weekdays":["5"],"time_from":"00:00",...}
+  {"time_to":"23:59","weekdays":["5","6","7"],"time_from":"09:00",...}
+  {"time_to":"01:59","weekdays":["6","7"],"time_from":"00:00",...}
+  {"time_to":"01:59","weekdays":["1"],"time_from":"00:00",...}
+
+================================================================================
+БАГ №1 — ДУБЛИРОВАНИЕ ТАРИФА НА 1 МАЯ (и любую дату с двумя планами)
+================================================================================
+
+СИМПТОМ:
+  На 1 мая 2026 в мобильном приложении/API показываются цены из ДВУХ тарифов
+  вместо одного. Для всех остальных дней тариф отображается корректно.
+
+ФАЙЛ:
+  modules/ParimZharim/Orders/src/Application/Actions/GetPlanDetailsForObjectOnDate.php
+  Строка: 14-16
+
+ПРОБЛЕМНЫЙ КОД:
+  $plans = $object->plans()
+      ->wherePivot('date_from', '<=', $date)
+      ->get();  // ← возвращает ВСЕ планы, а не только последний
+
+ПОЧЕМУ ЛОМАЕТСЯ:
+  Запрос возвращает все планы, у которых date_from <= запрошенная дата.
+  На 1 мая 2026:
+    - Старый план (date_from = 2024-05-02): 2024-05-02 <= 2026-05-01 → TRUE
+    - Новый план (date_from = 2026-05-01): 2026-05-01 <= 2026-05-01 → TRUE
+  Оба попадают в коллекцию. Далее:
+    $prices = $plans->map(fn($p) => $p->metadata['mobile_app_price'])
+  Возвращает mobile_app_price из ОБОИХ планов — двойной прайс.
+
+  До 1 мая (например, 30 апреля):
+    - Новый план: 2026-05-01 <= 2026-04-30 → FALSE → не попадает → только старый → OK
+
+ПРАВИЛЬНАЯ ЛОГИКА:
+  Должен возвращаться только ОДИН (последний) план — тот, у которого date_from
+  максимальный среди подходящих. Аналог правильного кода есть в:
+  OrderableServiceObjectPriceCalculationService::getCurrentPlanOrFail():
+    ->wherePivot('date_from', '<=', $dateFrom)
+    ->orderBy('date_from', 'desc')
+    ->first();  // ← берёт только последний
+
+  Также баг присутствует в том же файле для kitchen_deposit и guest_limits
+  (там .first() спасает, но порядок не гарантирован).
+
+АНАЛОГИЧНАЯ ПРОБЛЕМА:
+  modules/ParimZharim/Orders/src/Application/Actions/GetScheduleDetailsForObjectOnDate.php
+  Строка: 17-18
+    $schedules = $object->schedules()
+        ->wherePivot('date_from', '<=', $date)
+        ->get();  // ← тоже все, а не последний
+  Затем берётся .min() по min_duration — сейчас значения у старого и нового
+  расписания совпадают (120 мин для бань №1-2), поэтому видимой ошибки нет.
+  Но это потенциальный баг, если значения разойдутся.
+
+================================================================================
+БАГ №2 — БРОНИРОВАНИЕ С ОКОНЧАНИЕМ В 02:00 ПАДАЕТ С ОШИБКОЙ
+================================================================================
+
+СИМПТОМ:
+  Пользователь выбирает слот 23:00, макс. длительность 3 часа → конец в 02:00.
+  При попытке создать заказ система возвращает ошибку "нерабочее время"
+  или "недостаточно свободного времени".
+
+ФАЙЛ:
+  modules/ParimZharim/Orders/src/Domain/Services/OrderableObjectSlotsCalculatorService.php
+  Строка: ~246-249
+
+ПРОБЛЕМНЫЙ КОД (в методе checkIfOrderCanBePlacedOnTimeOrFail):
+  $slots = self::getSlotsForObjectOnDate($serviceObjectID, $startDate, $extendedEndDate, 30);
+
+  foreach ($slots as $slotIndex => $slot) {
+      $slotStart = Carbon::parse($slot['start'])->shiftTimezone(...);
+      $slotEnd   = Carbon::parse($slot['end'])->shiftTimezone(...);
+
+      if ($slotStart->greaterThan($endDate)) {  // ← строгое >, а не >=
+          break;
+      }
+
+      if (!$slot['is_free']) {
+          throw new InvalidOrderParams(...);  // ← падает здесь
+      }
+  }
+
+ПОШАГОВОЕ ОБЪЯСНЕНИЕ:
+  1. getSlotsForObjectOnDate вызывается с $startDate=23:00, $endDate=02:00, step=30.
+  2. calculateTimeSlots генерирует слоты в цикле:
+       for ($current = 23:00; $current <= 02:00; $current += 30min)
+     Генерируются: 23:00, 23:30, 00:00, 00:30, 01:00, 01:30, 02:00 ← включается!
+  3. Слот 02:00 проверяется по расписанию Schedule 25.
+     Правило для пятницы: time_from="00:00", time_to="01:59"
+     Проверка: "02:00:00" <= "01:59" → FALSE (строковое сравнение)
+     → слот 02:00 = is_free=false, reason="нерабочее время"
+  4. В цикле checkIfOrderCanBePlacedOnTimeOrFail:
+     $slotStart = 02:00, $endDate = 02:00
+     $slotStart->greaterThan($endDate) → 02:00 > 02:00 → FALSE → не выходим!
+     → идём дальше → !$slot['is_free'] = true → throw InvalidOrderParams
+
+ПОЧЕМУ РАНЬШЕ НЕ ЗАМЕЧАЛИ:
+  Со старым расписанием (time_to="05:59"), тот же баг существовал для 06:00,
+  но пользователи крайне редко бронировали ровно до 06:00.
+  С новым закрытием в 02:00 и минимум 3 часа — сценарий 23:00→02:00
+  является ОБЫЧНЫМ и критическим.
+
+ГДЕ ИСПРАВИТЬ:
+  Строка ~248: заменить
+    if ($slotStart->greaterThan($endDate)) {
+  на
+    if ($slotStart->greaterThanOrEqualTo($endDate)) {
+  Тогда при достижении слота 02:00 (= endDate) цикл завершится до проверки is_free.
+
+================================================================================
+БАГ №3 (ПОТЕНЦИАЛЬНЫЙ) — GetScheduleDetailsForObjectOnDate берёт min() из всех расписаний
+================================================================================
+
+СИМПТОМ:
+  На 1 мая может отображаться неверная минимальная длительность (min_hours).
+  Сейчас не проявляется, так как у обоих расписаний значения совпадают.
+
+ФАЙЛ:
+  modules/ParimZharim/Orders/src/Application/Actions/GetScheduleDetailsForObjectOnDate.php
+  Строки: 17-42
+
+ПРОБЛЕМНЫЙ КОД:
+  $schedules = $object->schedules()
+      ->wherePivot('date_from', '<=', $date)
+      ->get(); // ← все расписания, включая устаревшие
+
+  $minDuration = $schedules->map(function ($schedule) use ($dayOfWeek) {
+      $weekDaysData = collect($schedule->metadata['rules']['week_days']);
+      $relevantData = $weekDaysData->first(fn($wd) => in_array($dayOfWeek, $wd['weekdays']));
+      return $relevantData ? $relevantData['min_duration'] : null;
+  })->filter()->min(); // ← минимум из ВСЕХ расписаний
+
+ПОЧЕМУ ЭТО НЕВЕРНО:
+  На 1 мая подходят оба расписания. Если у старого min_duration=120,
+  а у нового min_duration=180 — метод вернёт 120 (старое значение) вместо 180.
+  Аналогичная проблема с confirmation_waiting_duration.
+
+================================================================================
+ДОПОЛНИТЕЛЬНОЕ НАБЛЮДЕНИЕ — мёртвое правило в Schedule 1 для 1 мая
+================================================================================
+
+В расписании Schedule 1 (старое, Баня №1-2) есть:
+  "concrete_days": [{"days": ["01-05-2026"], "time_to": "07:59", "time_from": "00:00", ...}]
+
+Это правило НИКОГДА не срабатывает, потому что новое расписание Schedule 25
+имеет date_from = 2026-05-01 00:00:00, и начиная с 00:00 1 мая getScheduleForDate
+возвращает Schedule 25 (он "свежее"). Правило было добавлено вручную для ночного
+продолжения с 30 апреля, но оно бесполезно — вреда не приносит, но вводит в заблуждение.
+
+================================================================================
+МЕТОДОЛОГИЯ — как работает выбор расписания/тарифа
+================================================================================
+
+loadSchedulesForDate (EloquentOrderableServiceObjectRepository):
+  1. Загружает расписания, где date_from входит в [startDate, endDate]
+  2. Загружает крайнее расписание с date_from <= startDate (для покрытия начала периода)
+  3. Объединяет и сортирует по date_from DESC
+
+getScheduleForDate (OrderableObjectSlotsCalculatorService):
+  return $schedules->first(fn($s) => $date >= $s->pivot->date_from);
+  Берёт ПЕРВОЕ подходящее из отсортированного DESC списка = самое свежее. ✓
+
+getSlotRule:
+  1. Сначала проверяет concrete_days (точные даты формата "DD-MM-YYYY")
+  2. Если не нашёл — проверяет week_days (дни недели)
+  Сравнение времени строковое: $time >= time_from && $time <= time_to
+  Работает для диапазонов в пределах одного дня (не пересекающих полночь).
+
+Ночные слоты (00:00-02:00) моделируются как ОТДЕЛЬНЫЕ правила для следующего дня:
+  - Четверг 23:00→09:00-23:59, а продолжение до 02:00 записано как Пятница 00:00-01:59
+
+================================================================================
+ФАЙЛЫ ДЛЯ ИСПРАВЛЕНИЯ (приоритет)
+================================================================================
+
+КРИТИЧЕСКИЙ (мешает бронированию):
+  modules/ParimZharim/Orders/src/Domain/Services/OrderableObjectSlotsCalculatorService.php
+  Метод: checkIfOrderCanBePlacedOnTimeOrFail
+  Строка ~248: greaterThan → greaterThanOrEqualTo
+
+ВЫСОКИЙ (неверный тариф на 1 мая):
+  modules/ParimZharim/Orders/src/Application/Actions/GetPlanDetailsForObjectOnDate.php
+  Строка 14: добавить ->orderByPivot('date_from','desc')->limit(1) или ->first() после ->get()
+
+СРЕДНИЙ (потенциальный, пока не критичен):
+  modules/ParimZharim/Orders/src/Application/Actions/GetScheduleDetailsForObjectOnDate.php
+  Строка 17: аналогично — брать только последнее расписание
+
+================================================================================
+PRODUCTION SERVER INFO (для справки)
+================================================================================
+IP: 77.240.38.129
+SSH user: ubuntu
+SSH pass: VD52!_[VS[\Il9eq%,qU$fE2Ylq\dJfJcQFs
+После входа: sudo su или sudo -S
+Docker container DB: platform_db
+Команда для запросов:
+  sudo docker exec platform_db psql -U platform_user -d platform_db -c "SELECT ..."
+Проект: /var/apps/platform_app (внутри docker контейнера platform_app)
+
+================================================================================
