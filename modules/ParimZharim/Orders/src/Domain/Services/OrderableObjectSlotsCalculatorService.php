@@ -439,18 +439,17 @@ class OrderableObjectSlotsCalculatorService extends BaseDomainService
         $defaultMinDuration = null;
         $defaultMaxDuration = null;
 
-        $schedule = self::getScheduleForDate($schedules, $date);
+        $slotDate = Carbon::parse($slot['start'], $date->timezone);
+
+        $schedule = self::getScheduleForDate($schedules, $slotDate);
 
         if (!$schedule) {
             return [$defaultMinDuration, $defaultMaxDuration];
         }
 
         $rules = $schedule->metadata['rules'];
-        $time = Carbon::parse($slot['start'])->toTimeString();
 
-        $date = Carbon::parse($date->format('Y-m-d') . ' ' . $time);
-
-        $slotRule = self::getSlotRule($rules, $date);
+        $slotRule = self::getSlotRule($rules, $slotDate);
 
         if ($slotRule) {
             return [(int)$slotRule['min_duration'], (int)$slotRule['max_duration']];
@@ -759,7 +758,9 @@ class OrderableObjectSlotsCalculatorService extends BaseDomainService
     private static function getScheduleForDate($schedules, Carbon $date): ?Schedule
     {
         return $schedules->first(function ($schedule) use ($date) {
-            return $date->greaterThanOrEqualTo($schedule->pivot->date_from);
+            $scheduleStartDate = $schedule->pivot->date_from->copy()->shiftTimezone($date->timezone);
+
+            return $date->greaterThanOrEqualTo($scheduleStartDate);
         });
     }
 

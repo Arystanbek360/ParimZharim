@@ -19,26 +19,35 @@ class GetScheduleDetailsForObjectOnDate extends BaseAction
             ->limit(1)
             ->get();
 
-        $minDuration = $schedules
-            ->map(function ($schedule) use ($dayOfWeek) {
-                $weekDaysData = collect($schedule->metadata['rules']['week_days']);
-                $relevantData = $weekDaysData->first(function ($weekDay) use ($dayOfWeek) {
-                    return in_array($dayOfWeek, $weekDay['weekdays']);
-                });
+        $relevantRules = $schedules
+            ->flatMap(function ($schedule) use ($date, $dayOfWeek) {
+                $rules = $schedule->metadata['rules'] ?? [];
+                $day = $date->format('d-m-Y');
+                $concreteDayRules = collect($rules['concrete_days'] ?? [])
+                    ->filter(function ($rule) use ($day) {
+                        return in_array($day, $rule['days'] ?? []);
+                    });
 
-                return $relevantData ? $relevantData['min_duration'] : null;
+                if ($concreteDayRules->isNotEmpty()) {
+                    return $concreteDayRules;
+                }
+
+                return collect($rules['week_days'] ?? [])
+                    ->filter(function ($weekDay) use ($dayOfWeek) {
+                        return in_array($dayOfWeek, $weekDay['weekdays'] ?? []);
+                    });
+            });
+
+        $minDuration = $relevantRules
+            ->map(function ($rule) {
+                return $rule['min_duration'] ?? null;
             })
             ->filter()
             ->min();
 
-        $confirmationWaitingDuration = $schedules
-            ->map(function ($schedule) use ($dayOfWeek) {
-                $weekDaysData = collect($schedule->metadata['rules']['week_days']);
-                $relevantData = $weekDaysData->first(function ($weekDay) use ($dayOfWeek) {
-                    return in_array($dayOfWeek, $weekDay['weekdays']);
-                });
-
-                return $relevantData ? (int)$relevantData['confirmation_waiting_duration'] : null;
+        $confirmationWaitingDuration = $relevantRules
+            ->map(function ($rule) {
+                return isset($rule['confirmation_waiting_duration']) ? (int)$rule['confirmation_waiting_duration'] : null;
             })
             ->filter()
             ->min();
