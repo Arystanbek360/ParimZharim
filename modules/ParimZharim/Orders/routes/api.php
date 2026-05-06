@@ -14,6 +14,8 @@ Route::prefix('api/orders')->group(function () {
         Route::get('/get-orders', [OrderApiController::class, 'getOrdersByCustomer']);
         Route::get('/get-order-by-id', [OrderApiController::class, 'viewOrderDetailsByCustomer']);
         Route::post('/create-payment', [OrderApiController::class, 'createPaymentForOrder']);
+        Route::get('/saved-cards', [OrderApiController::class, 'getSavedCardsForCustomer']);
+        Route::post('/pay-with-saved-card', [OrderApiController::class, 'payWithSavedCard']);
     });
 });
 
