@@ -25,7 +25,13 @@ use Modules\ParimZharim\Orders\Domain\Errors\OrderableObjectNotFound;
 use Modules\ParimZharim\Orders\Domain\Errors\OrderNotFound;
 use Modules\ParimZharim\Profile\Application\Actions\GetCustomerByUser;
 use Modules\Shared\Core\Adapters\Api\BaseApiController;
+use Modules\Shared\Payment\Adapters\Api\Transformers\PaymentCardTransformer;
+use Modules\Shared\Payment\Application\Actions\GetSavedPaymentCardsForCustomer;
+use Modules\Shared\Payment\Application\Actions\PayPaymentWithSavedCard;
+use Modules\Shared\Payment\Application\Actions\QueryPaymentByID;
 use Modules\Shared\Payment\Domain\Models\PaymentMethodType;
+use Modules\Shared\Payment\Domain\Models\PaymentStatus;
+use RuntimeException;
 use Throwable;
 
 class OrderApiController extends BaseApiController
@@ -344,5 +350,61 @@ class OrderApiController extends BaseApiController
         } catch (StatusChangeViolation|AdvancePaymentIsAlreadyCreated $e) {
             return $this->respondError($e->getMessage(), 409);
         }
+    }
+
+    public function getSavedCardsForCustomer(Request $request): JsonResponse
+    {
+        $customer = GetCustomerByUser::make()->handle($request->user());
+        if (!$customer) {
+            return $this->respondError('No customer linked with this user', 400);
+        }
+
+        $cards = GetSavedPaymentCardsForCustomer::make()->handle($customer->id);
+        $transformer = new PaymentCardTransformer();
+        $data = $cards->map(fn($card) => $transformer->transform($card))->values()->all();
+
+        return $this->respond($data);
+    }
+
+    public function payWithSavedCard(Request $request): JsonResponse
+    {
+        $request->validate([
+            'payment_id' => 'required|integer',
+            'card_id'    => 'required|integer',
+        ]);
+
+        $customer = GetCustomerByUser::make()->handle($request->user());
+        if (!$customer) {
+            return $this->respondError('No customer linked with this user', 400);
+        }
+
+        $paymentId = (int) $request->input('payment_id');
+        $cardId    = (int) $request->input('card_id');
+
+        $payment = QueryPaymentByID::make()->handle($paymentId);
+        if (!$payment) {
+            return $this->respondNotFound('Payment not found');
+        }
+
+        if ($payment->customer_id !== $customer->id) {
+            return $this->respondForbidden('Payment does not belong to this customer');
+        }
+
+        try {
+            $payment = PayPaymentWithSavedCard::make()->handle($payment, $cardId);
+        } catch (RuntimeException $e) {
+            return $this->respondError($e->getMessage(), 422);
+        }
+
+        $threeDsUrl = null;
+        if ($payment->status === PaymentStatus::PENDING && !empty($payment->metadata['threeDs'])) {
+            $threeDsUrl = config('app.url') . '/payment-widget/' . $payment->id . '/3ds';
+        }
+
+        return $this->respond([
+            'payment_id'   => $payment->id,
+            'status'       => $payment->status->value,
+            'three_ds_url' => $threeDsUrl,
+        ]);
     }
 }
