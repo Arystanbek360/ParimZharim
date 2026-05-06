@@ -32,10 +32,12 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
     {
         return [
             'publicId' => $this->publicId,
+            'publicTerminalId' => $this->publicId,
             'description' => $payment->comment,
             'amount' => $payment->total,
             'currency' => 'KZT',
             'invoiceId' => $payment->id,
+            'externalId' => (string)$payment->id,
             'accountId' => $payment->customer_id,
         ];
     }
@@ -155,17 +157,13 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
                 return $payment;
             }
 
-            $status = $this->mapStatus($data['Model']['Status']);
-            if ($status === PaymentStatus::FAILED) {
-                PaymentFailed::dispatch($payment, $data['Model']['Reason'] ?? null);
-                return $payment;
-            }
-
             $this->syncPaymentFromProviderModel($payment, $data['Model']);
             return $payment;
         }
 
         if (($data['Success'] ?? false) !== true) {
+            $payment->status = PaymentStatus::FAILED;
+            $this->paymentRepository->savePayment($payment);
             PaymentFailed::dispatch($payment, $data['Message'] ?? null);
         }
 
@@ -191,6 +189,8 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
             return $payment;
         }
 
+        $payment->status = PaymentStatus::FAILED;
+        $this->clearThreeDsChallenge($payment);
         PaymentFailed::dispatch($payment, $data['Message'] ?? null);
 
         return $payment;
@@ -230,14 +230,15 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
     public function syncFromPaymentSystemProvider(int $paymentID): Payment
     {
         $response = $this->auth()->post($this->base_url . 'v2/payments/find', [
-            'InvoiceID' => $paymentID
+            'InvoiceId' => (string)$paymentID
         ]);
 
         $data = $response->json();
         $payment = $this->paymentRepository->getPaymentById($paymentID);
 
-        if (isset($data['Model'])) {
-            $this->syncPaymentFromProviderModel($payment, $data['Model']);
+        $model = $this->extractPaymentModel($data['Model'] ?? null);
+        if ($model) {
+            $this->syncPaymentFromProviderModel($payment, $model);
         }
 
         return $payment;
@@ -323,5 +324,20 @@ class TipTopPayPaymentService extends BaseService implements CloudPaymentService
             PaymentStatus::FAILED => PaymentFailed::dispatch($payment, $errorReason),
             default => null,
         };
+    }
+
+    private function extractPaymentModel(mixed $model): ?array
+    {
+        if (!is_array($model) || empty($model)) {
+            return null;
+        }
+
+        if (array_key_exists('TransactionId', $model)) {
+            return $model;
+        }
+
+        $first = reset($model);
+
+        return is_array($first) ? $first : null;
     }
 }

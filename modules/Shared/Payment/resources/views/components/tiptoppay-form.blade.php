@@ -4,33 +4,30 @@
     <script src="https://widget.tiptoppay.kz/bundles/widget.js"></script>
     <script>
         function launchPayment() {
-            var widget = new tiptop.Widget({
-                language: "ru-RU",
-                applePaySupport: true,
-                googlePaySupport: true,
-            });
-            widget.pay('auth', {
-                publicId: '{{ $paymentData['publicId'] }}',
-                description: '{{ $paymentData['description'] }}',
-                amount: {{ $paymentData['amount'] }},
-                currency: '{{ $paymentData['currency'] }}',
-                invoiceId: '{{ $paymentData['invoiceId'] }}',
-                accountId: '{{ $paymentData['accountId'] }}',
-                skin: "mini",
-                data: {}
-            }, {
-                onSuccess: function(options) {
-                    console.log('Оплата прошла успешно');
-                    document.getElementById('message').innerHTML = '<p style="color: green;">Оплата прошла успешно.</p>';
-                },
-                onFail: function(reason, options) {
-                    console.log('Ошибка оплаты', reason);
-                    document.getElementById('message').innerHTML = '<p style="color: red;">Ошибка оплаты. Пожалуйста, попробуйте еще раз.</p>';
-                },
-                onComplete: function(paymentResult, options) {
-                    console.log('Процесс оплаты завершен', paymentResult);
-                    document.getElementById('message').innerHTML = '<p style="color: green;">Заказ успешно оплачен.</p>';
+            var widget = new tiptop.Widget();
+            widget.oncomplete = function(paymentResult) {
+                console.log('Процесс оплаты завершен', paymentResult);
+            };
+
+            widget.start({
+                publicTerminalId: @json($paymentData['publicTerminalId']),
+                description: @json($paymentData['description']),
+                amount: @json((float)$paymentData['amount']),
+                currency: @json($paymentData['currency']),
+                externalId: @json($paymentData['externalId']),
+                paymentSchema: 'Dual',
+                culture: 'ru-RU',
+                tokenize: true,
+                retryPayment: false,
+                userInfo: {
+                    accountId: @json((string)$paymentData['accountId'])
                 }
+            }).then(function(paymentResult) {
+                console.log('Оплата прошла успешно', paymentResult);
+                document.getElementById('message').innerHTML = '<p style="color: green;">Заказ успешно оплачен.</p>';
+            }).catch(function(error) {
+                console.log('Ошибка оплаты', error);
+                document.getElementById('message').innerHTML = '<p style="color: red;">Ошибка оплаты. Пожалуйста, попробуйте еще раз.</p>';
             });
         }
 

@@ -784,18 +784,44 @@ class OrderableObjectSlotsCalculatorService extends BaseDomainService
         $slotRule = null;
 
         if (isset($rules['concrete_days']) && count($rules['concrete_days']) > 0) {
-            $slotRule = collect($rules['concrete_days'])->first(function ($rule) use ($day, $time) {
-                return in_array($day, $rule['days']) && $time >= $rule['time_from'] && $time <= $rule['time_to'];
+            $previousDay = $date->copy()->subDay()->format('d-m-Y');
+            $slotRule = collect($rules['concrete_days'])->first(function ($rule) use ($day, $previousDay, $time) {
+                return self::matchesDayAndTime(
+                    $rule['days'] ?? [],
+                    $day,
+                    $previousDay,
+                    $time,
+                    $rule['time_from'],
+                    $rule['time_to'],
+                );
             });
         }
 
         if (!$slotRule && isset($rules['week_days']) && count($rules['week_days']) > 0) {
-            $slotRule = collect($rules['week_days'])->first(function ($rule) use ($dayOfWeek, $time) {
-                return in_array($dayOfWeek, $rule['weekdays']) && $time >= $rule['time_from'] && $time <= $rule['time_to'];
+            $previousDayOfWeek = $date->copy()->subDay()->dayOfWeekIso;
+            $slotRule = collect($rules['week_days'])->first(function ($rule) use ($dayOfWeek, $previousDayOfWeek, $time) {
+                return self::matchesDayAndTime(
+                    $rule['weekdays'] ?? [],
+                    $dayOfWeek,
+                    $previousDayOfWeek,
+                    $time,
+                    $rule['time_from'],
+                    $rule['time_to'],
+                );
             });
         }
 
         return $slotRule;
+    }
+
+    private static function matchesDayAndTime(array $days, int|string $day, int|string $previousDay, string $time, string $timeFrom, string $timeTo): bool
+    {
+        if ($timeFrom <= $timeTo) {
+            return in_array($day, $days) && $time >= $timeFrom && $time <= $timeTo;
+        }
+
+        return (in_array($day, $days) && $time >= $timeFrom)
+            || (in_array($previousDay, $days) && $time <= $timeTo);
     }
 
 

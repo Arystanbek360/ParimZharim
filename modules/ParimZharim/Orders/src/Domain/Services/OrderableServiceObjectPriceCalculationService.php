@@ -176,19 +176,23 @@ class OrderableServiceObjectPriceCalculationService extends BaseDomainService {
     private static function applyConcreteDayRules(OrderableServiceObject $serviceObject, array $concreteDays, Carbon $currentHour, array &$priceCalculationByTime, float $priceRatio): bool
     {
         foreach ($concreteDays as $day) {
-            foreach ($day['days'] as $d) {
-                $dayRange = Carbon::parse($d)->setTimezone($serviceObject->getObjectTimezone());
-                if ($currentHour->isSameDay($dayRange)) {
-                    if ($currentHour->between($dayRange->copy()->setTimeFromTimeString($day['time_from']), $dayRange->copy()->setTimeFromTimeString($day['time_to']))) {
-                        $priceCalculationByTime[] = [
-                            'date' => $currentHour->format('Y-m-d H:i:s'),
-                            'price' => (float)$day['price'] * $priceRatio,
-                            'description' => "Цена за " . $dayRange->format('d.m.Y') . " с " . $day['time_from'] . " по " . $day['time_to'] . " (коэффициент цены " . $priceRatio . ")"
-                        ];
-                        return true;
-                    }
-                }
+            if (!self::matchesDayAndTime(
+                $day['days'] ?? [],
+                $currentHour->format('d-m-Y'),
+                $currentHour->copy()->subDay()->format('d-m-Y'),
+                $currentHour->toTimeString(),
+                $day['time_from'],
+                $day['time_to'],
+            )) {
+                continue;
             }
+
+            $priceCalculationByTime[] = [
+                'date' => $currentHour->format('Y-m-d H:i:s'),
+                'price' => (float)$day['price'] * $priceRatio,
+                'description' => "Цена за " . $currentHour->format('d.m.Y') . " с " . $day['time_from'] . " по " . $day['time_to'] . " (коэффициент цены " . $priceRatio . ")"
+            ];
+            return true;
         }
         return false;
     }
@@ -196,17 +200,35 @@ class OrderableServiceObjectPriceCalculationService extends BaseDomainService {
     private static function applyWeekDayRules(array $weekDays, Carbon $currentHour, array &$priceCalculationByTime, float $priceRatio): bool
     {
         foreach ($weekDays as $weekDay) {
-            if (in_array($currentHour->dayOfWeekIso, $weekDay['weekdays']) &&
-                $currentHour->between($currentHour->copy()->setTimeFromTimeString($weekDay['time_from']), $currentHour->copy()->setTimeFromTimeString($weekDay['time_to']))) {
-                $priceCalculationByTime[] = [
-                    'date' => $currentHour->format('Y-m-d H:i:s'),
-                    'price' => (float)$weekDay['price'] * $priceRatio,
-                    'description' => "Цена за " . $currentHour->locale('ru')->dayName . " с " . $weekDay['time_from'] . " по " . $weekDay['time_to'] . " (коэффициент цены " . $priceRatio . ")"
-                ];
-                return true;
+            if (!self::matchesDayAndTime(
+                $weekDay['weekdays'] ?? [],
+                $currentHour->dayOfWeekIso,
+                $currentHour->copy()->subDay()->dayOfWeekIso,
+                $currentHour->toTimeString(),
+                $weekDay['time_from'],
+                $weekDay['time_to'],
+            )) {
+                continue;
             }
+
+            $priceCalculationByTime[] = [
+                'date' => $currentHour->format('Y-m-d H:i:s'),
+                'price' => (float)$weekDay['price'] * $priceRatio,
+                'description' => "Цена за " . $currentHour->locale('ru')->dayName . " с " . $weekDay['time_from'] . " по " . $weekDay['time_to'] . " (коэффициент цены " . $priceRatio . ")"
+            ];
+            return true;
         }
         return false;
+    }
+
+    private static function matchesDayAndTime(array $days, int|string $day, int|string $previousDay, string $time, string $timeFrom, string $timeTo): bool
+    {
+        if ($timeFrom <= $timeTo) {
+            return in_array($day, $days) && $time >= $timeFrom && $time <= $timeTo;
+        }
+
+        return (in_array($day, $days) && $time >= $timeFrom)
+            || (in_array($previousDay, $days) && $time <= $timeTo);
     }
 
     private static function calculateFixedPrice(OrderableServiceObject $serviceObject, array $rules, Carbon $dateFrom, Carbon $dateTo): array
