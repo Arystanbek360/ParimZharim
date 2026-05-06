@@ -16,17 +16,26 @@ class PaymentTransformer extends BaseTransformer
     public function transform(Payment|BaseDTO|BaseValueObject|BaseModel|array $data)
     {
         $url = null;
-        if ($data->payment_method == PaymentMethodType::CLOUD_PAYMENT && $data->status == PaymentStatus::CREATED) {
-            $url = config('app.url') . '/payment-widget/' . $data->id;
-        }
+        $threeDsUrl = null;
+
         if ($data instanceof Payment) {
+            if ($data->payment_method == PaymentMethodType::CLOUD_PAYMENT && $data->status == PaymentStatus::CREATED) {
+                $url = config('app.url') . '/payment-widget/' . $data->id;
+            }
+
+            if ($data->status === PaymentStatus::PENDING && !empty($data->metadata['threeDs'])) {
+                $threeDsUrl = config('app.url') . '/payment-widget/' . $data->id . '/3ds';
+            }
+
             return [
-                'id' => $data->id,
-                'status' => $data->status,
-                'amount' => (float) $data->total,
-                'url' => $url,
+                'id'           => $data->id,
+                'status'       => $data->status,
+                'amount'       => (float) $data->total,
+                'url'          => $url,
+                'three_ds_url' => $threeDsUrl,
             ];
         }
+
         return [];
     }
 }
