@@ -359,11 +359,15 @@ class OrderApiController extends BaseApiController
             return $this->respondError('No customer linked with this user', 400);
         }
 
-        $cards = GetSavedPaymentCardsForCustomer::make()->handle($customer->id);
-        $transformer = new PaymentCardTransformer();
-        $data = $cards->map(fn($card) => $transformer->transform($card))->values()->all();
+        try {
+            $cards = GetSavedPaymentCardsForCustomer::make()->handle($customer->id);
+            $transformer = new PaymentCardTransformer();
+            $data = $cards->map(fn($card) => $transformer->transform($card))->values()->all();
 
-        return $this->respond($data);
+            return $this->respond($data);
+        } catch (Throwable $e) {
+            return $this->respondError('Failed to retrieve saved cards: ' . $e->getMessage(), 500);
+        }
     }
 
     public function payWithSavedCard(Request $request): JsonResponse
