@@ -25,6 +25,13 @@ class TechnicalReserveService extends BaseDomainService
         $object->endTechnicalReserveDateTime = $endTechnicalReserveDateTime;
     }
 
+    public static function cancelTechnicalReserve(OrderableServiceObject $object): void
+    {
+        Log::info('Cancelling technical reserve for object with id: ' . $object->id);
+        $object->startTechnicalReserveDateTime = null;
+        $object->endTechnicalReserveDateTime = null;
+    }
+
     /**
      * @throws InvalidOrderParams
      */

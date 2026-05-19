@@ -22,6 +22,7 @@ use Modules\ParimZharim\Objects\Adapters\Admin\Resources\CategoryAdminResource;
 use Modules\ParimZharim\Objects\Adapters\Admin\Resources\ServiceObjectAdminResource;
 use Modules\ParimZharim\Objects\Adapters\Admin\Resources\TagAdminResource;
 use Modules\ParimZharim\Orders\Adapters\Admin\Actions\CreateOrderForServiceObjectAdminAction;
+use Modules\ParimZharim\Orders\Adapters\Admin\Actions\CancelTechnicalReserveForOrderableServiceObjectAdminAction;
 use Modules\ParimZharim\Orders\Adapters\Admin\Actions\SetTechnicalReserveForOrderableServiceObjectAdminAction;
 use Modules\ParimZharim\Orders\Adapters\Admin\Resources\Lenses\OrderableObjectSlotsTableAdminResource;
 use Modules\ParimZharim\Orders\Application\Actions\GetMergedFreeSlotsForServiceObjectOnDate;
@@ -225,7 +226,18 @@ class OrderableServiceObjectAdminResource extends ServiceObjectAdminResource
                 })
                 ->showInline()
                 ->confirmText('Вы уверены, что хотите установить технический резерв для этого объекта?')
-                ->confirmButtonText('Установить технический резерв')
+                ->confirmButtonText('Установить технический резерв'),
+
+            (new CancelTechnicalReserveForOrderableServiceObjectAdminAction)
+                ->canSee(function (NovaRequest $request) {
+                    return true;
+                })
+                ->canRun(function (NovaRequest $request, $resource) {
+                    return true;
+                })
+                ->showInline()
+                ->confirmText('Вы уверены, что хотите снять технический резерв с этого объекта?')
+                ->confirmButtonText('Снять технический резерв'),
 
         ];
 

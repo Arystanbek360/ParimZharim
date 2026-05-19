@@ -115,17 +115,25 @@ class ServiceObject extends BaseModel implements HasMedia{
         return $endDateTime;
     }
 
-    public function setStartTechnicalReserveDateTimeAttribute(Carbon $startDateTime): void
+    public function setStartTechnicalReserveDateTimeAttribute(?Carbon $startDateTime): void
     {
         $metadata = $this->metadata;
-        $metadata['startTechnicalReserveDateTime'] = $startDateTime->format('Y-m-d H:i:s');
+        if ($startDateTime === null) {
+            unset($metadata['startTechnicalReserveDateTime']);
+        } else {
+            $metadata['startTechnicalReserveDateTime'] = $startDateTime->format('Y-m-d H:i:s');
+        }
         $this->metadata = $metadata;
     }
 
-    public function setEndTechnicalReserveDateTimeAttribute(Carbon $endDateTime): void
+    public function setEndTechnicalReserveDateTimeAttribute(?Carbon $endDateTime): void
     {
         $metadata = $this->metadata;
-        $metadata['endTechnicalReserveDateTime'] = $endDateTime->format('Y-m-d H:i:s');
+        if ($endDateTime === null) {
+            unset($metadata['endTechnicalReserveDateTime']);
+        } else {
+            $metadata['endTechnicalReserveDateTime'] = $endDateTime->format('Y-m-d H:i:s');
+        }
         $this->metadata = $metadata;
     }
 }
