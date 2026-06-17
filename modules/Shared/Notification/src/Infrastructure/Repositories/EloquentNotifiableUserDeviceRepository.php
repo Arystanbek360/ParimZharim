@@ -8,7 +8,6 @@ use Modules\Shared\Notification\Domain\Repositories\NotifiableUserDeviceReposito
 
 class EloquentNotifiableUserDeviceRepository extends  BaseRepository implements NotifiableUserDeviceRepository
 {
-
     public function getUserDeviceByUserIdAndDeviceId(int $userId, string $deviceId): ?NotifiableUserDevice
     {
         return NotifiableUserDevice::where('user_id', $userId)->where('device_id', $deviceId)->first();
@@ -21,11 +20,7 @@ class EloquentNotifiableUserDeviceRepository extends  BaseRepository implements 
 
     public function cleanDeviceToken(int $userId, string $deviceId): void
     {
-        $userDevice = NotifiableUserDevice::where('user_id', $userId)->where('device_id', $deviceId)->first();
-        if ($userDevice) {
-            $userDevice->device_token = null;
-            $userDevice->save();
-        }
+        NotifiableUserDevice::where('user_id', $userId)->where('device_id', $deviceId)->update(['device_token' => null]);
     }
 
 }

@@ -85,11 +85,8 @@ class EloquentNotificationRepository extends BaseRepository implements Notificat
                 ->whereNull('sent_at');
         })
             ->where('planed_send_at', '<=', now())
-            ->with(['users' => function ($query) {
-                $query->where('status', NotificationStatus::CREATED)
-                    ->whereNull('sent_at');
-            }])
             ->orderBy('planed_send_at', 'asc')
+            ->limit(500)
             ->get();
 
         return new NotificationCollection($notifications);

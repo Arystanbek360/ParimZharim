@@ -22,7 +22,7 @@ class NotificationModuleProvider extends BaseModuleProvider
     {
         $this->app->bind(NotificationRepository::class, EloquentNotificationRepository::class);
         $this->app->bind(NotifiableUserDeviceRepository::class, EloquentNotifiableUserDeviceRepository::class);
-        $this->app->bind(PushNotificationService::class, FirebaseService::class);
+        $this->app->singleton(PushNotificationService::class, FirebaseService::class);
     }
 
     /**
@@ -39,7 +39,7 @@ class NotificationModuleProvider extends BaseModuleProvider
 
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
-            $schedule->command(SendNotificationCommand::class)->everyMinute();
+            $schedule->command(SendNotificationCommand::class)->everyMinute()->withoutOverlapping();
         });
     }
 }

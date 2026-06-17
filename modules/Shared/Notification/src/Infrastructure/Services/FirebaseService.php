@@ -130,12 +130,13 @@ class FirebaseService extends BaseService implements PushNotificationService
     {
         $failedUserIds = [];
         $invalidTokens = $report->invalidTokens();
+        $repo = self::getNotifiableUserDeviceRepository();
 
         foreach ($invalidTokens as $token) {
             $userId = $tokenToUserIdMap[$token] ?? null;
             if ($userId) {
                 $failedUserIds[] = $userId;
-                self::getNotifiableUserDeviceRepository()->cleanDeviceToken($userId, $token);
+                $repo->cleanDeviceToken($userId, $token);
             }
         }
 

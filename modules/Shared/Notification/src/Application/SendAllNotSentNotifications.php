@@ -49,7 +49,7 @@ class SendAllNotSentNotifications extends BaseAction
 
     private function getUsersToNotify(Notification $notification): UserCollection
     {
-        if (empty($notification->users) && $notification->for_all_users) {
+        if ($notification->for_all_users && $notification->users()->doesntExist()) {
             NotificationService::assignNotificationToEveryone($notification);
         }
 
